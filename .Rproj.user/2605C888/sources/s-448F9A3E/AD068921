@@ -12,15 +12,15 @@
     "path" : null,
     "project_path" : null,
     "properties" : {
-        "cacheKey" : "D134DDC2",
+        "cacheKey" : "36CEA7E9",
         "caption" : "md_election_working",
-        "contentUrl" : "grid_resource/gridviewer.html?env=&obj=md_election_working&cache_key=D134DDC2",
-        "displayedObservations" : "55327",
+        "contentUrl" : "grid_resource/gridviewer.html?env=&obj=md_election_working&cache_key=36CEA7E9",
+        "displayedObservations" : "2",
         "environment" : "",
         "object" : "md_election_working",
         "preview" : "0",
-        "totalObservations" : "55327",
-        "variables" : "3"
+        "totalObservations" : "2",
+        "variables" : "7"
     },
     "relative_order" : 2,
     "source_on_save" : false,

@@ -93,6 +93,8 @@ md_election <- read_csv("md_election.csv")
 ##### Examine Data #######
 ##########################
 
+# As we go through this section, where applicable I will display the equivalent SQL code. 
+
 # This functions displays the data as a sortable spreadsheet. 
 
 View(md_election)
@@ -106,7 +108,7 @@ View(md_election)
 ## Get a Sense of Data ###
 ##########################
 
-# These two functions will give you a sense of what columns are in the data, the column data type and values. 
+# These two functions will give you a sense of what columns are in the data, the column data type and values. They output in the console.
 
 summary(md_election)
 
@@ -150,6 +152,7 @@ View(md_election_working)
 # Think of them as standing in for the words, "and then".
 # Using them lets us store the name of the dataframe at the top of the function, so we don't have to write it again.  This is especially useful when we start chaining commands together. 
 # This says "take the dataframe called md_election AND THEN select every column except receiving_committee. 
+# Notice that we don't need to put the name of the dataframe as the first argument in the select function.
 
 md_election_working <- md_election %>%
   select(-receiving_committee)
@@ -228,7 +231,7 @@ View(md_election_working)
 # WHERE contribution_amount > 10000
 # ORDER BY contribution_amount desc;
 
-##### Filtering by two values #####
+##### Filtering by two values (AND) #####
 
 md_election_working <- md_election %>%
   select(receiving_committee, contributor_name, contribution_amount) %>%
@@ -242,7 +245,7 @@ View(md_election_working)
 # WHERE contribution_amount > 10000 AND receiving_committee = "Hogan Larry for Governor"
 # ORDER BY contribution_amount desc;
 
-##### Filtering by one value or another #####
+##### Filtering by one value OR another #####
 
 md_election_working <- md_election %>%
   select(receiving_committee, contributor_name, state, contribution_amount) %>%
@@ -250,97 +253,185 @@ md_election_working <- md_election %>%
   filter(state == "VA" | state == "MD")
 View(md_election_working)
 
-# also wildcards
+# SQL Equivalent # 
+# SELECT receiving_committee, contributor_name, state, contribution_amount
+# FROM md_election
+# WHERE state == "VA" OR state == "MD"
+# ORDER BY contribution_amount desc;
 
-hogan_contributions <- md_election %>%
+##### Filtering with wildcards - text in any part of field #####
+
+md_election_working <- md_election %>%
   select(receiving_committee, contributor_name, state, contribution_amount) %>%
   arrange(desc(contribution_amount)) %>%
-  filter(str_detect(receiving_committee, "Hogan"))
-View(hogan_contributions)
+  filter(str_detect(contributor_name, "Republican"))
+View(md_election_working)
 
-hogan_contributions <- md_election %>%
+# SQL Equivalent # 
+# SELECT receiving_committee, contributor_name, state, contribution_amount
+# FROM md_election
+# WHERE contributor_name LIKE "%Republican%"
+# ORDER BY contribution_amount desc;
+
+##### Filtering with wildcards - text at start of field #####
+
+md_election_working <- md_election %>%
   select(receiving_committee, contributor_name, state, contribution_amount) %>%
   arrange(desc(contribution_amount)) %>%
-  filter(str_detect(receiving_committee, "$Hogan"))
-View(hogan_contributions)
+  filter(str_detect(contributor_name, "^Republican"))
+View(md_election_working)
 
-# working with dates
-# install.packages('lubridate')
+# SQL Equivalent # 
+# SELECT receiving_committee, contributor_name, state, contribution_amount
+# FROM md_election
+# WHERE contributor_name LIKE "Republican%"
+# ORDER BY contribution_amount desc;
 
-library(lubridate)
+##### Filtering with wildcards - text at end of field #####
 
-# recent ones
-recent_contributions <- md_election %>%
+md_election_working <- md_election %>%
+  select(receiving_committee, contributor_name, state, contribution_amount) %>%
+  arrange(desc(contribution_amount)) %>%
+  filter(str_detect(contributor_name, "Maryland$"))
+View(md_election_working)
+
+# SQL Equivalent # 
+# SELECT receiving_committee, contributor_name, contribution_amount
+# FROM md_election
+# WHERE contributor_name LIKE "%Maryland"
+# ORDER BY contribution_amount desc;
+
+##### Filtering with dates #####
+
+# To make it easier to work with dates, we need to install a new package, lubridate, which has a lot of built in functions to work with dates. 
+# Lubridate is a package that is part of the tidyverse family, but it doesn't automatically load when we load the rest of the tidyverse. So we have to load it separately.  We only need to install it once. 
+
+install.packages('lubridate')
+
+# Now load it.  Typically, we'd put this at the top of our script file when we load the rest of the packages.
+
+library('lubridate')
+
+##### Filter based on specific date ##### 
+
+md_election_working <- md_election %>%
   select(receiving_committee, contribution_date, contributor_name, contribution_amount) %>%
   arrange(desc(contribution_amount)) %>%
   filter(contribution_date > as_date("2017-12-31"))
-View(recent_contributions)
+View(md_election_working)
 
-# year 
-only_2017_contributions <- md_election %>%
+# SQL Equivalent # 
+# SELECT receiving_committee, contribution_date, contributor_name, contribution_amount
+# FROM md_election
+# WHERE contribution_date > "2017-12-31"
+# ORDER BY contribution_amount desc;
+
+##### Filter based on year ##### 
+
+md_election_working <- md_election %>%
   select(receiving_committee, contribution_date, contributor_name, contribution_amount) %>%
   arrange(desc(contribution_amount)) %>%
   filter(year(contribution_date) == 2017)
-View(only_2017_contributions) 
+View(md_election_working) 
 
-#### Adding columns ####
+# SQL Equivalent # 
+# SELECT receiving_committee, contribution_date, contributor_name, contribution_amount
+# FROM md_election
+# WHERE YEAR(contribution_date) = 2017
+# ORDER BY contribution_amount desc;
+
+##############################
+##### Adding New Columns #####
+##############################
+
+#### Add a column with a unique identifier ####
+md_election_working <- md_election %>%
+  mutate(record_number = row_number())
+View(md_election_working) 
+
+#### Add a new column based on another column ####
 md_election_working <- md_election %>%
   mutate(contribution_year = year(contribution_date))
 View(md_election_working) 
+
+# SQL Equivalent # 
+# SELECT *, YEAR(contribution_date) as contribution_year
+# FROM md_election;
+
+#### Add several new columns based on another column ####
 
 md_election_working <- md_election %>%
   mutate(contribution_year = year(contribution_date),
          contribution_month = month(contribution_date))
 View(md_election_working) 
 
+# SQL Equivalent # 
+# SELECT *, YEAR(contribution_date) as contribution_year, MONTH(contribution_date) as month
+# FROM md_election;
+
+#### Using If Else to create new columns ####
+
 md_election_working <- md_election %>%
-  mutate(contribution_size = if_else(
-          contribution_amount > 10000, "large_contribution", "small_contribution"
-          )
-        )
+  mutate(contribution_size = if_else(contribution_amount > 10000, "large_contribution", "small_contribution"))
+
+# SQL Equivalent # 
+# SELECT *, contribution_amount, IF(contribution_amount > 10000, "large contribution", "small contribution") as contribution_size
+# FROM md_election;
+
+#### Create new columns with a different version of nested If Else statements ####
 
 md_election_working <- md_election %>%
   mutate(contribution_size = case_when(
     contribution_amount > 20000 ~ "very large",
     contribution_amount > 10000 ~ "large",
     contribution_amount > 1000 ~ "medium",
-    contribution_amount > 0 ~ "small"
-  )
-  )           
-           
-           
-           if_else(
-    contribution_amount > 10000, "large_contribution", "small_contribution"
-  )
-  )
-
-case_when(
-  height > 200 | mass > 200 ~ "large",
-  species == "Droid"        ~ "robot",
-  TRUE                      ~ "other"
-)
-
+    contribution_amount > 0 ~ "small"))           
+View(md_election_working)           
+   
+#### Create new columns based on math ####
 
 md_election_working <- md_election %>%
   mutate(contribution_times_10 = contribution_amount*10)
+View(md_election_working)
 
-#### Summary Stats
+# SQL Equivalent # 
+# SELECT *, (contribution_amount*10) as contribution_times_10
+# FROM md_election;
 
-## Grouping and aggregating 
+
+##############################
+# Calculating Summary Stats ##
+##############################
+
+#### Grouping by a column and counting ####
 md_election_working <- md_election %>%
   group_by(receiving_committee) %>%
   summarise(number_records = n()) %>%
   arrange(desc(number_records))
 View(md_election_working)
 
-## Grouping and aggregating by two fields
+# SQL Equivalent # 
+# SELECT receiving_committee, count(*) as number_records
+# FROM md_election
+# GROUP BY receiving_committee
+# ORDER BY number_records desc;
+
+#### Grouping by two columns and counting ####
+
 md_election_working <- md_election %>%
   group_by(receiving_committee, state) %>%
   summarise(number_records = n()) %>%
   arrange(receiving_committee, desc(number_records))
 View(md_election_working)
 
-## summary_table
+# SQL Equivalent # 
+# SELECT receiving_committee, state, count(*) as number_records
+# FROM md_election
+# GROUP BY receiving_committee, state
+# ORDER BY receiving_committee, number_records desc;
+
+
+#### Creating a summary table with sum, mean, median, min and max ####
 md_election_working <- md_election %>%
   group_by(receiving_committee) %>%
   summarise(number_records = n(),
@@ -353,35 +444,9 @@ md_election_working <- md_election %>%
   arrange(receiving_committee, desc(number_records))
 View(md_election_working)
 
-## check values
-
-md_election_working <- md_election %>%
-  group_by(filing_period) %>%
-  summarise(count=n()) %>%
-  arrange(desc(count))
-View(md_election_working)
-
-## We could run through these for the next column
-
-md_election_working <- md_election %>%
-  group_by(contributor_name) %>%
-  summarise(count=n()) %>%
-  arrange(desc(count))
-View(md_election_working)
-
-## We could keep writing this again and again, or we could build a function 
-
-column_check <- function(columnname){
-  md_election_working <- md_election %>%
-    group_by(!!enquo(columnname)) %>%
-    summarise(count=n()) %>%
-    arrange(desc(count))
-  View(md_election_working)
-}
-
-glimpse(md_election)
-
-column_check(zip_code)
-column_check(state)
-column_check(contributor_type)
+# SQL Equivalent # 
+# SELECT receiving_committee, count(*) as number_records, SUM(contribution_amount) as contribution_total, AVG(contribution_amount) as average_contribution, min(contribution_amount) as minimum_contribution, max(contribution_amount) as maximum_contribution
+# FROM md_election
+# GROUP BY receiving_committee
+# ORDER BY receiving_committee, number_records desc;
 
